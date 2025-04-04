@@ -144,6 +144,9 @@ map_data = pd.DataFrame({
 # Apply region filter to map data
 if selected_region != "All":
     map_data = map_data[map_data["City"] == selected_region]
+
+# Rename columns for Streamlit compatibility
+map_data = map_data.rename(columns={'Lat': 'latitude', 'Lon': 'longitude'})
 st.map(map_data)
 
 # Data Export Options
