@@ -1,61 +1,65 @@
-import streamlit as st
+import qrcode
+import os
 
-# Set page config
-st.set_page_config(page_title="BMI Calculator", page_icon="💪", layout="centered")
+def generate_qr(data, filename="qrcode.png", version=1, box_size=10, border=4, error_correction=qrcode.constants.ERROR_CORRECT_L):
+    try:
+        qr = qrcode.QRCode(
+            version=version, 
+            error_correction=error_correction,  
+            box_size=box_size,  
+            border=border  
+        )
 
-# Custom CSS
-st.markdown("""
-    <style>
-        .big-font {
-            font-size:30px !important;
-            font-weight:600;
-            color:#4CAF50;
+        qr.add_data(data) 
+        qr.make(fit=True) 
+
+        img = qr.make_image(fill="black", back_color="white")
+        
+        directory = os.path.dirname(filename)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory)
+
+        img.save(filename)
+        print(f"\n✅ QR code generated successfully and saved as '{filename}'!\n")
+
+    except Exception as e:
+        print(f"\n❌ An error occurred: {e}\n")
+
+def main():
+    print("\n📌 QR Code Generator")
+    print("=====================")
+    
+    data = input("\nEnter the text or URL to encode in the QR code: ").strip()
+    
+    if not data:
+        print("❌ Error: Data cannot be empty. Please provide a valid text or URL.")
+        return
+
+    filename = input("Enter the filename to save (default: qrcode.png): ").strip()
+    if not filename:
+        filename = "qrcode.png" 
+    try:
+        version = int(input("\nEnter the QR code version (1-40, default: 1): ").strip() or 1)
+        if not (1 <= version <= 40):
+            raise ValueError("Version must be between 1 and 40.")
+        
+        box_size = int(input("Enter the box size (default: 10): ").strip() or 10)
+        border = int(input("Enter the border size (default: 4): ").strip() or 4)
+        
+        error_correction_level = input("Enter error correction level (L, M, Q, H, default: L): ").strip().upper()
+        error_correction_dict = {
+            'L': qrcode.constants.ERROR_CORRECT_L,
+            'M': qrcode.constants.ERROR_CORRECT_M,
+            'Q': qrcode.constants.ERROR_CORRECT_Q,
+            'H': qrcode.constants.ERROR_CORRECT_H
         }
-        .result-font {
-            font-size:24px !important;
-            font-weight:500;
-        }
-    </style>
-""", unsafe_allow_html=True)
+        error_correction = error_correction_dict.get(error_correction_level, qrcode.constants.ERROR_CORRECT_L)
 
-# App Title
-st.markdown('<p class="big-font">💪 BMI Calculator</p>', unsafe_allow_html=True)
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        return
 
-# Input Section
-st.subheader("Enter your details:")
+    generate_qr(data, filename, version, box_size, border, error_correction)
 
-name = st.text_input("Your Name", "")
-age = st.number_input("Age", min_value=1, max_value=120, step=1)
-gender = st.selectbox("Gender", ["Select", "Male", "Female", "Other"])
-height = st.number_input("Height (in cm)", min_value=50.0, max_value=250.0, step=0.1)
-weight = st.number_input("Weight (in kg)", min_value=10.0, max_value=250.0, step=0.1)
-
-# BMI Calculation
-def calculate_bmi(weight, height):
-    height_m = height / 100
-    return round(weight / (height_m ** 2), 2)
-
-def get_bmi_status(bmi):
-    if bmi < 18.5:
-        return "Underweight 😟"
-    elif 18.5 <= bmi < 24.9:
-        return "Normal weight 😊"
-    elif 25 <= bmi < 29.9:
-        return "Overweight 😐"
-    else:
-        return "Obese 😟"
-
-# Button to calculate
-if st.button("Calculate BMI"):
-    if height > 0 and weight > 0 and gender != "Select":
-        bmi = calculate_bmi(weight, height)
-        status = get_bmi_status(bmi)
-
-        st.markdown(f"<p class='result-font'>Hi <strong>{name}</strong>, your BMI is: <strong>{bmi}</strong></p>", unsafe_allow_html=True)
-        st.success(f"BMI Status: {status}")
-    else:
-        st.error("Please fill in all the details correctly!")
-
-# Footer
-st.markdown("---")
-st.caption("Built with ❤️ using Streamlit")
+if __name__ == "__main__":
+    main()
